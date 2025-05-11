@@ -172,7 +172,7 @@ Function GetYahooProfileData(tickerSymbol As String, ByRef sectorOutput As Strin
     '====================================================================================================
     ' FUNZIONE: GetYahooProfileData
     ' OBIETTIVO TECNICO: Recuperare informazioni specifiche (Settore, Valuta) dalla pagina profilo
-    '                    di un titolo su Yahoo Finance, dato il suo Ticker Symbol.
+    '                     di un titolo su Yahoo Finance, dato il suo Ticker Symbol.
     ' PARAMETRI DI INPUT:
     '   tickerSymbol (String) - Il Ticker Symbol del titolo (es. "AAPL").
     ' PARAMETRI DI OUTPUT (ByRef):
@@ -204,8 +204,8 @@ Function GetYahooProfileData(tickerSymbol As String, ByRef sectorOutput As Strin
     ' Istanziazione dell'oggetto MSXML2.XMLHTTP (vedi commenti in GetTickerFromISIN per i dettagli).
     On Error Resume Next
     Set http = CreateObject("MSXML2.XMLHTTP.60.0")
-    If Err.Number <> 0 Then Err.Clear : Set http = CreateObject("MSXML2.XMLHTTP.3.0")
-    If Err.Number <> 0 Then Err.Clear : Set http = CreateObject("MSXML2.XMLHTTP")
+    If Err.Number <> 0 Then Err.Clear: Set http = CreateObject("MSXML2.XMLHTTP.3.0")
+    If Err.Number <> 0 Then Err.Clear: Set http = CreateObject("MSXML2.XMLHTTP")
     On Error GoTo 0
     
     If http Is Nothing Then
@@ -220,7 +220,8 @@ Function GetYahooProfileData(tickerSymbol As String, ByRef sectorOutput As Strin
     ' Configurazione e invio della richiesta HTTP GET per la pagina profilo.
     On Error Resume Next
     http.Open "GET", profileUrl, False
-    http.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    ' MODIFICA: Allineamento dello User-Agent a quello della Sub funzionante
+    http.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     http.send
     
     If Err.Number <> 0 Then
@@ -243,7 +244,8 @@ Function GetYahooProfileData(tickerSymbol As String, ByRef sectorOutput As Strin
         ' Logica di parsing per il Settore: itera sui link <a> e analizza l'attributo href.
         ' Un link di settore ha una struttura URL specifica: /sectors/NOME_SETTORE/
         searchPos = 1 ' Inizia la ricerca dall'inizio del testo HTML.
-        ' sectorOutput è già inizializzato a "Non trovato".
+        ' MODIFICA (Minore, per allineamento): Reinizializza sectorOutput prima del loop di parsing specifico
+        sectorOutput = "Settore non trovato"
         Do
             linkStartPos = InStr(searchPos, profileResponseText, "<a ", vbTextCompare) ' Trova l'inizio di un tag <a>.
             If linkStartPos = 0 Then Exit Do ' Nessun altro tag <a> trovato, esce dal loop.
@@ -283,14 +285,14 @@ Function GetYahooProfileData(tickerSymbol As String, ByRef sectorOutput As Strin
                 End If
             End If
             searchPos = linkEndPos + Len("</a>") ' Prepara la ricerca per il prossimo tag <a>.
-        Loop Until sectorOutput <> "Non trovato" Or linkStartPos = 0
+        Loop Until sectorOutput <> "Settore non trovato" Or linkStartPos = 0
         
         ' --- Estrarre Valuta ---
         ' Logica di parsing per la Valuta: cerca il marcatore testuale "Currency in "
         ' e estrae i 3 caratteri successivi.
         Dim currencyMarker As String, currencyMarkerPos As Long
         currencyMarker = "Currency in " ' Marcatore testuale chiave.
-        ' currencyOutput è già inizializzato a "Non trovata".
+        ' currencyOutput è già inizializzato a "Valuta non trovata".
         
         currencyMarkerPos = InStr(1, profileResponseText, currencyMarker, vbTextCompare) ' Ricerca case-insensitive del marcatore.
         If currencyMarkerPos > 0 Then
